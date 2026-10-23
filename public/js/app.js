@@ -44,7 +44,7 @@ $('#loginForm').addEventListener('submit', async e => {
   state.user = res.user;
   showApp();
 });
-$('#logoutBtn').onclick = () => { api.logout(); state.user = null; $('#appView').classList.add('hidden'); $('#loginView').classList.remove('hidden'); $('#password').value=''; };
+$('#logoutBtn').onclick = () => { api.logout(); document.getElementById('adminRoot')?.remove(); $('#appView').classList.remove('admin'); state.user = null; $('#appView').classList.add('hidden'); $('#loginView').classList.remove('hidden'); $('#password').value=''; };
 
 /* ---------- aplikasi ---------- */
 async function showApp(){
