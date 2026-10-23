@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#6C5CE7">
+<title>PR Digital – Belajar Jadi Lebih Seru</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<main id="loginView">
+  <form class="login-card" id="loginForm" autocomplete="on" novalidate>
+    <div class="logo" aria-hidden="true">📚</div>
+    <h1>PR Digital</h1>
+    <p class="sub">Catat, kerjakan, dan selesaikan PR dengan mudah ✨</p>
+
+    <label for="username">Username / NIS</label>
+    <div class="field"><input id="username" name="username" autocomplete="username" placeholder="contoh: admin" required></div>
+
+    <label for="password">Kata sandi</label>
+    <div class="field">
+      <input id="password" name="password" type="password" autocomplete="current-password" placeholder="••••••" required>
+      <button type="button" class="eye" id="togglePw" aria-label="Tampilkan kata sandi">👁️</button>
+    </div>
+
+    <p class="err" id="loginErr" role="alert"></p>
+    <button class="btn" id="loginBtn" type="submit">Masuk</button>
+  </form>
+</main>
+
+<!-- ================= APP ================= -->
+<div id="appView" class="hidden">
+  <div class="wrap">
+    <header class="top">
+      <div class="hello"><small id="today"></small><h2>Halo, <span id="who">Admin</span>! 👋</h2></div>
+      <div style="display:flex;gap:8px">
+        <button class="icon-btn" id="themeBtn" aria-label="Ganti tema"></button>
+        <button class="icon-btn" id="logoutBtn" aria-label="Keluar"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="ring" id="ring"><span id="pct">0%</span></div>
+      <div><h3 id="heroTitle">Semangat belajar!</h3><p id="heroText">Selesaikan PR tepat waktu.</p></div>
+      <div class="stats" aria-label="Ringkasan">
+      <div class="stat"><b id="sTotal">0</b><small>Total PR</small></div>
+      <div class="stat"><b id="sTodo">0</b><small>Belum</small></div>
+      <div class="stat"><b id="sDone">0</b><small>Selesai</small></div>
+      </div>
+    </section>
+
+    <div class="toolbar">
+      <div class="chips" id="chips" role="tablist">
+        <button class="chip on" data-f="all">Semua</button>
+        <button class="chip" data-f="todo">Belum selesai</button>
+        <button class="chip" data-f="done">Selesai</button>
+      </div>
+    </div>
+
+    <section class="list" id="list" aria-live="polite"></section>
+  </div>
+</div>
+
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/app.js"></script>
+<script src="/js/admin.js"></script>
+</body>
+</html>
