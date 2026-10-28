@@ -9,6 +9,9 @@ const safeEq = (a, b) => {
   return r === 0;
 };
 export const bad = m => Object.assign(new Error(m), { user: true }); // pesan aman ditampilkan ke pengguna
+export const forbid = m => Object.assign(bad(m), { status: 403 });
+// Data profil yang dikirim ke frontend (login & cek sesi)
+export const profil = u => ({ id: u.id, name: u.nama, role: u.role, wajib: u.ganti_sandi, lembaga: u.lembaga, istilah: u.istilah_kelas, platform: u.platform });
 export const body = async r => { try { return await r.json(); } catch { throw bad('Data tidak valid'); } };
 export const json = (d, status = 200, h = {}) =>
   new Response(JSON.stringify(d), { status, headers: { 'content-type': 'application/json', ...h } });
@@ -47,7 +50,8 @@ export async function auth({ request, env }) {
     return u.exp > Date.now() ? u : null;
   } catch { return null; }
 }
-// Pembungkus endpoint: cek sesi + status akun di database, siapkan koneksi Neon, tangani error
+// Pembungkus endpoint: cek sesi + status akun & lembaga di database, siapkan koneksi Neon, tangani error.
+// Handler menerima (ctx, u, sql); u.lembaga_id WAJIB dipakai di setiap query data agar lembaga tidak saling melihat.
 export const route = (roles, fn) => async ctx => {
   try {
     const sql = db(ctx.env);
@@ -55,13 +59,14 @@ export const route = (roles, fn) => async ctx => {
     if (roles) {
       const t = await auth(ctx);
       if (!t) return json({ error: 'Silakan login' }, 401);
-      [u] = await sql`select id,nis,nama,role,pass_hash,ganti_sandi from users where id=${+t.id || 0} and aktif`;
+      [u] = await sql`select u.id,u.nis,u.nama,u.role,u.pass_hash,u.ganti_sandi,u.lembaga_id,l.nama lembaga,l.istilah_kelas,l.platform
+        from users u join lembaga l on l.id=u.lembaga_id where u.id=${+t.id || 0} and u.aktif and l.aktif`;
       if (!u || t.v !== u.pass_hash.slice(0, 12)) return json({ error: 'Silakan login' }, 401);
       if (!roles.includes(u.role)) return json({ error: 'Tidak diizinkan' }, 403);
     }
     return await fn(ctx, u, sql);
   } catch (e) {
-    if (e.user) return json({ error: e.message }, 400);
+    if (e.user) return json({ error: e.message }, e.status || 400);
     console.error(e);
     return json({ error: 'Terjadi kesalahan di server' }, 500);
   }

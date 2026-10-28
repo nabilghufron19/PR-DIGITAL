@@ -1,7 +1,7 @@
 // Ganti kata sandi sendiri (admin & murid). Sesi lama otomatis tidak berlaku, cookie baru diterbitkan.
 import { route, json, bad, body, checkPw, hashPw, makeCookie } from '../_lib/core.js';
 
-export const onRequestPost = route(['admin', 'murid'], async ({ request, env }, u, sql) => {
+export const onRequestPost = route(['admin', 'guru', 'murid'], async ({ request, env }, u, sql) => {
   const { lama = '', baru = '' } = await body(request);
   const b = String(baru);
   if (b.length < 6) throw bad('Kata sandi baru minimal 6 karakter');

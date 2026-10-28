@@ -83,7 +83,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:12p
 .empty div{font-size:3rem}
 .fab{position:fixed;right:20px;bottom:calc(22px + env(safe-area-inset-bottom,0px));padding:15px 22px;border-radius:999px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--brand),#8C7BFF);box-shadow:0 12px 28px rgba(108,92,231,.45)}
 @media(min-width:720px){.fab{position:static;padding:12px 22px;box-shadow:0 8px 20px rgba(108,92,231,.35);flex:none}}
-dialog{border:0;border-radius:24px;padding:24px;width:min(92vw,420px);background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+dialog{border:0;border-radius:24px;padding:24px;width:min(92vw,420px);max-height:92dvh;overflow:auto;background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
 dialog::backdrop{background:rgba(18,16,31,.55);backdrop-filter:blur(4px)}
 dialog input,dialog select{width:100%;padding:12px 14px;border-radius:12px;border:2px solid var(--line);background:var(--bg)}
 .row{display:flex;gap:10px;margin-top:20px}
@@ -140,4 +140,20 @@ dialog textarea{width:100%;padding:12px 14px;border-radius:12px;border:2px solid
   .tbl td input[type=checkbox]{width:22px;height:22px}
   .tbl .meter{width:110px;margin:0 0 4px auto}
   .toast{bottom:96px}
+}
+
+/* ---------- Tugas hibrida, rekap, multi-lembaga ---------- */
+.mut{color:var(--muted)}
+.check.setor{cursor:default;font-size:1.05rem}
+dialog select[multiple]{padding:6px;min-height:150px}
+dialog .hint{display:block;color:var(--muted);font-size:.78rem;font-weight:500;margin-top:3px}
+.detail-h{margin:2px 0 14px}.detail-h h3{font-size:1.15rem;font-weight:800;overflow-wrap:anywhere}
+.detail-h p{color:var(--muted);font-size:.88rem}
+.detail-h .isi{color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:8px}
+.st{font-weight:800;font-size:.8rem}.st.ok{color:var(--ok)}.st.no{color:var(--muted)}.st.cab{color:var(--bad)}
+.tbl small.mut{display:block;font-size:.76rem}
+@media(max-width:719px){
+  #appView.admin .tabs{grid-template-columns:repeat(var(--n,4),1fr)}
+  #appView.admin .tabs .chip .tl{font-size:.7rem}
+  .tbl td small.mut{display:inline}
 }

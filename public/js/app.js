@@ -31,15 +31,18 @@ $('#togglePw').onclick = () => {
 };
 $('#loginForm').addEventListener('submit', async e => {
   e.preventDefault();
-  const u = $('#username').value, p = $('#password').value, err = $('#loginErr'), btn = $('#loginBtn');
-  if (!u.trim() || !p){ err.textContent = 'Isi username dan kata sandi dulu ya.'; return; }
+  const k = $('#kode').value, u = $('#username').value, p = $('#password').value, err = $('#loginErr'), btn = $('#loginBtn');
+  if (!k.trim() || !u.trim() || !p){ err.textContent = 'Isi kode lembaga, username, dan kata sandi dulu ya.'; return; }
   err.textContent = ''; btn.disabled = true; btn.textContent = 'Memeriksa…';
-  const res = await api.login(u, p);
+  const res = await api.login(k, u, p);
   btn.disabled = false; btn.textContent = 'Masuk';
   if (!res.ok){ err.textContent = res.message; return; }
+  try{ localStorage.setItem('kode', k.trim().toLowerCase()) }catch(e){}
   state.user = res.user;
   showApp();
 });
+// ingat kode lembaga terakhir di perangkat ini
+try{ $('#kode').value = localStorage.getItem('kode') || '' }catch(e){}
 // Kembali ke halaman login dan bersihkan sisa tampilan akun sebelumnya (panel admin, filter, daftar PR)
 function toLogin(){
   state.user = null; state.filter = 'all';
@@ -48,6 +51,7 @@ function toLogin(){
   document.querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x.dataset.f === 'all'));
   $('#appView').classList.add('hidden'); $('#appView').classList.remove('admin');
   $('#loginView').classList.remove('hidden'); $('#password').value='';
+  if ($('#kode').value) $('#username').focus();
   document.getElementById('fdlg')?.close();
 }
 $('#logoutBtn').onclick = async () => { await api.logout(); toLogin(); };
@@ -77,15 +81,16 @@ async function showApp(){
   $('#adminRoot')?.remove();
   $('#loginView').classList.add('hidden'); $('#appView').classList.remove('hidden');
   $('#who').textContent = state.user.name;
-  $('#appView').classList.toggle('admin', state.user.role === 'admin');
-    $('#today').textContent = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long'});
-  state.user.role === 'admin' ? adminInit() : render();
+  const staf = state.user.role !== 'murid'; // admin & guru memakai panel pengelola
+  $('#appView').classList.toggle('admin', staf);
+  $('#today').textContent = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long'}) + (state.user.lembaga ? ' · ' + state.user.lembaga : '');
+  staf ? adminInit() : render();
   if (state.user.wajib) pwDialog(true);
 }
 // it.diff dihitung server (zona Asia/Jakarta), sama dengan hitungan "terlambat" di panel admin
 function dueInfo(it){
   const diff = it.diff;
-  if (it.done) return ['ok','Sudah dikumpulkan'];
+  if (it.done) return ['ok', it.mode==='setor' ? 'Sudah diterima guru' : 'Sudah dikumpulkan'];
   if (diff < 0) return ['late','Terlambat '+(-diff)+' hari'];
   if (diff === 0) return ['soon','Hari ini!'];
   if (diff === 1) return ['soon','Besok'];
@@ -106,8 +111,10 @@ async function render(){
     const [ico,bg] = SUBJECTS[it.subject] || ['📝','#DFE6E9']; const [cls,txt] = dueInfo(it);
     return `<article class="card ${it.done?'done':''}">
       <div class="badge" style="background:${bg}">${ico}</div>
-      <div class="info"><h4>${esc(it.title)}</h4><p>${esc(it.subject)}</p><p class="isi">${esc(it.isi||'')}</p><span class="due ${cls}">${txt}</span></div>
-      <button class="check" data-id="${it.id}" aria-label="Tandai selesai">${it.done?'✓':''}</button>
+      <div class="info"><h4>${esc(it.title)}</h4><p>${esc(it.subject)}</p><p class="isi">${esc(it.isi||'')}</p><span class="due ${cls}">${it.mode==='setor'&&!it.done?'Setor buku · '+txt:txt}</span></div>
+      ${it.mode==='setor'
+        ? `<span class="check setor" title="Setor langsung ke guru" aria-label="${it.done?'Sudah diterima guru':'Setor langsung ke guru'}">${it.done?'✓':'📕'}</span>`
+        : `<button class="check" data-id="${it.id}" aria-label="Tandai selesai">${it.done?'✓':''}</button>`}
     </article>`;}).join('')
     : '<div class="empty"><div>🎈</div><p>Belum ada PR di sini.</p></div>';
 }

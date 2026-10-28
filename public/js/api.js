@@ -14,7 +14,7 @@ const crud = n => ({
   del: id => call(`/api/${n}?id=${id}`, 'DELETE')
 });
 const api = {
-  login: (username, password) => call('/api/session', 'POST', { username, password }).catch(e => ({ ok: false, message: e.message })),
+  login: (kode, username, password) => call('/api/session', 'POST', { kode, username, password }).catch(e => ({ ok: false, message: e.message })),
   me: () => call('/api/session').then(u => (u.name ? u : null)).catch(() => null),
   sandi: (lama, baru) => call('/api/sandi', 'POST', { lama, baru }),
   logout: () => call('/api/session', 'DELETE').catch(() => {}),
@@ -22,10 +22,13 @@ const api = {
   togglePR: id => call('/api/pr', 'POST', { id }),
   soal: crud('soal'),
   murid: crud('murid'),
+  guru: crud('guru'),
+  lembaga: crud('lembaga'),
   tugas: {
-    list: () => call('/api/tugas'),
-    assign: b => call('/api/tugas', 'POST', b),
-    status: (ids, status) => call('/api/tugas', 'PATCH', { ids, status })
+    ...crud('tugas'),
+    get: id => call('/api/tugas?id=' + id),
+    status: (ids, status) => call('/api/tugas', 'PATCH', { ids, status }),
+    setor: (ids, selesai) => call('/api/setor', 'POST', { ids, selesai })
   },
   monitor: () => call('/api/monitor')
 };
