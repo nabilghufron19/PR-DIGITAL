@@ -11,7 +11,7 @@ const table = (cols, rows) => `<div class="scroll"><table class="tbl"><thead><tr
 const xlsxOut = (rows, name) => { const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'Data'); XLSX.writeFile(wb, name + '.xlsx'); };
 const pickFile = cb => {
   const i = document.createElement('input'); i.type = 'file'; i.accept = '.xlsx,.xls,.csv';
-  i.onchange = guard(async () => { if (!i.files[0]) return; const wb = XLSX.read(await i.files[0].arrayBuffer()); await cb(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' })); });
+  i.onchange = guard(async () => { if (!i.files[0]) return; const wb = XLSX.read(await i.files[0].arrayBuffer()); await cb(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '', raw: false })); });
   i.click();
 };
 
@@ -22,8 +22,18 @@ function openForm(title, fields, vals, onOk) {
     ? `<textarea name="${f.k}" rows="5" ${f.r ? 'required' : ''}>${v(f)}</textarea>`
     : f.t === 'sel' ? `<select name="${f.k}">${f.o.map(o => `<option value="${esc(String(o[0]))}" ${String(o[0]) === String(vals[f.k] ?? '') ? 'selected' : ''}>${esc(String(o[1]))}</option>`).join('')}</select>`
     : `<input name="${f.k}" type="${f.t || 'text'}" value="${v(f)}" ${f.r ? 'required' : ''}>`)).join('')}
-    <div class="row"><button type="button" class="btn ghost" onclick="this.closest('dialog').close()">Batal</button><button class="btn">Simpan</button></div></form>`;
-  d.querySelector('form').onsubmit = guard(e => onOk(Object.fromEntries(new FormData(e.target))));
+    <p class="err" role="alert"></p>
+    <div class="row"><button type="button" class="btn ghost" data-x>Batal</button><button class="btn">Simpan</button></div></form>`;
+  const f = d.querySelector('form'), err = f.querySelector('.err');
+  f.querySelector('[data-x]').onclick = () => d.close();
+  // Dialog baru ditutup setelah server menerima data; kalau gagal, isian tetap ada dan pesan error tampil di dalam dialog
+  f.onsubmit = async e => {
+    e.preventDefault(); err.textContent = '';
+    const b = e.submitter; if (b) b.disabled = true;
+    try { await onOk(Object.fromEntries(new FormData(f))); d.close(); }
+    catch (x) { err.textContent = x.message; }
+    finally { if (b) b.disabled = false; }
+  };
   d.showModal();
 }
 
@@ -46,7 +56,7 @@ async function listPanel(p, c) {
   p.innerHTML = `<div class="bar"><button class="sbtn p" id="n">＋ Tambah</button><button class="sbtn" id="i">⬆ Import Excel</button><button class="sbtn" id="e">⬇ Export Excel</button><button class="sbtn" id="t">📄 Template</button></div>`
     + table([...c.head, ''], rows.map(r => `<tr>${c.cells(r).map(x => `<td>${esc(String(x ?? ''))}</td>`).join('')}<td style="white-space:nowrap"><button class="sbtn" data-e="${r.id}">Ubah</button> <button class="sbtn" data-d="${r.id}">Hapus</button></td></tr>`));
   $a('#n').onclick = () => openForm('Tambah ' + c.name, c.F, c.def || {}, async v => { await c.api.add(v); done(); });
-  $a('#i').onclick = () => pickFile(async d => { let n = 0; for (const part of chunks(d.map(norm), 20)) n += (await c.api.add(part)).dibuat; toast(n + ' data diimpor'); done(); });
+  $a('#i').onclick = () => pickFile(async d => { let n = 0, skip = 0; for (const part of chunks(d.map(norm), c.batch || 10)) { const r = await c.api.add(part); n += r.dibuat; skip += r.dilewati; } toast(n + ' data diimpor' + (skip ? `, ${skip} dilewati (kosong / duplikat akun admin)` : '')); done(); });
   $a('#e').onclick = () => xlsxOut(rows.map(c.out), c.name);
   $a('#t').onclick = () => xlsxOut([c.sample], 'template-' + c.name);
   p.onclick = guard(async e => {
@@ -72,8 +82,8 @@ const PANELS = {
   }),
   murid: p => listPanel(p, {
     name: 'murid', api: api.murid, head: ['NIS', 'Nama', 'Kelas', 'Status'], cells: r => [r.nis, r.nama, r.kelas, r.aktif ? 'Aktif' : 'Nonaktif'],
-    F: [{ k: 'nis', l: 'NIS (hanya saat tambah)', r: 1 }, { k: 'nama', l: 'Nama', r: 1 }, { k: 'kelas', l: 'Kelas' }, { k: 'password', l: 'Kata sandi (kosong = NIS / tidak diubah)', t: 'password' }, { k: 'aktif', l: 'Status', t: 'sel', o: [['true', 'Aktif'], ['false', 'Nonaktif']] }],
-    def: { aktif: 'true' }, out: r => ({ nis: r.nis, nama: r.nama, kelas: r.kelas, aktif: r.aktif ? 'ya' : 'tidak' }), sample: { nis: '12345', nama: 'Budi Santoso', kelas: '5A', password: '' }
+    F: [{ k: 'nis', l: 'NIS (hanya saat tambah)', r: 1 }, { k: 'nama', l: 'Nama', r: 1 }, { k: 'kelas', l: 'Kelas' }, { k: 'password', l: 'Kata sandi (kosong = NIS saat tambah / tidak diubah saat ubah). Murid wajib menggantinya saat login.', t: 'password' }, { k: 'aktif', l: 'Status', t: 'sel', o: [['true', 'Aktif'], ['false', 'Nonaktif']] }],
+    batch: 5, def: { aktif: 'true' }, out: r => ({ nis: r.nis, nama: r.nama, kelas: r.kelas, aktif: r.aktif ? 'ya' : 'tidak' }), sample: { nis: '012345', nama: 'Budi Santoso', kelas: '5A', password: '' }
   }),
   async tugas(p) {
     const [rows, soal, murid] = await Promise.all([api.tugas.list(), api.soal.list(), api.murid.list()]);
@@ -82,6 +92,7 @@ const PANELS = {
     p.innerHTML = `<div class="bar"><button class="sbtn p" id="n">📅 Tugaskan soal</button><button class="sbtn" id="c">⛔ Cabut terpilih</button><button class="sbtn" id="a">✅ Aktifkan terpilih</button><button class="sbtn" id="e">⬇ Export Excel</button></div>`
       + table(['', 'Soal', 'Murid', 'Kelas', 'Mulai', 'Tenggat', 'Status'], rows.map(r => `<tr><td><input type="checkbox" value="${r.id}"></td><td>${esc(r.judul)}</td><td>${esc(r.nama)}</td><td>${esc(r.kelas)}</td><td>${fmt(r.mulai)}</td><td>${fmt(r.tenggat)}</td><td>${st(r)}</td></tr>`));
     const ids = () => [...p.querySelectorAll('tbody input:checked')].map(i => +i.value);
+    if (rows.length >= 5000) toast('Hanya 5.000 penugasan terbaru yang ditampilkan & diekspor.');
     const set = s => guard(async () => { if (!ids().length) return toast('Pilih penugasan dulu'); await api.tugas.status(ids(), s); adminTab('tugas'); });
     $a('#c').onclick = set('dicabut'); $a('#a').onclick = set('aktif');
     $a('#n').onclick = () => openForm('Tugaskan soal', [

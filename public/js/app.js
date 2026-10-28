@@ -4,14 +4,10 @@ const SUBJECTS = {
   'IPA':['🔬','#81ECEC'], 'IPS':['🌏','#A29BFE'], 'Bahasa Inggris':['🔤','#FD79A8'],
   'PJOK':['⚽','#55EFC4'], 'Seni Budaya':['🎨','#FDCB6E']
 };
-const day = n => { const d = new Date(); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
 const state = { user:null, filter:'all', items:[] };
 
 const $ = s => document.querySelector(s);
-const store = { get:k=>{try{return sessionStorage.getItem(k)}catch(e){return null}},
-                set:(k,v)=>{try{sessionStorage.setItem(k,v)}catch(e){}},
-                del:k=>{try{sessionStorage.removeItem(k)}catch(e){}} };
-const esc = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 /* ---------- tema ---------- */
 const SUN=`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>`;
@@ -44,18 +40,51 @@ $('#loginForm').addEventListener('submit', async e => {
   state.user = res.user;
   showApp();
 });
-$('#logoutBtn').onclick = () => { api.logout(); document.getElementById('adminRoot')?.remove(); $('#appView').classList.remove('admin'); state.user = null; $('#appView').classList.add('hidden'); $('#loginView').classList.remove('hidden'); $('#password').value=''; };
+// Kembali ke halaman login dan bersihkan sisa tampilan akun sebelumnya (panel admin, filter, daftar PR)
+function toLogin(){
+  state.user = null; state.filter = 'all';
+  $('#adminRoot')?.remove();
+  $('#list').innerHTML = '';
+  document.querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x.dataset.f === 'all'));
+  $('#appView').classList.add('hidden'); $('#appView').classList.remove('admin');
+  $('#loginView').classList.remove('hidden'); $('#password').value='';
+  document.getElementById('fdlg')?.close();
+}
+$('#logoutBtn').onclick = async () => { await api.logout(); toLogin(); };
+let sesiHabisBusy = false;
+window.addEventListener('sesi-habis', () => {
+  if (!state.user || sesiHabisBusy) return;
+  sesiHabisBusy = true; toLogin(); toast('Sesi berakhir, silakan masuk lagi.');
+  setTimeout(() => sesiHabisBusy = false, 500);
+});
+
+/* ---------- ganti kata sandi ---------- */
+function pwDialog(wajib){
+  openForm(wajib ? 'Buat kata sandi baru dulu ya 🔑' : 'Ganti kata sandi', [
+    { k:'lama', l:'Kata sandi saat ini', t:'password', r:1 },
+    { k:'baru', l:'Kata sandi baru (min. 6 karakter)', t:'password', r:1 },
+    { k:'ulang', l:'Ulangi kata sandi baru', t:'password', r:1 }], {},
+    async v => {
+      if (v.baru !== v.ulang) throw new Error('Ulangan kata sandi tidak sama.');
+      await api.sandi(v.lama, v.baru);
+      state.user.wajib = false; toast('Kata sandi berhasil diganti ✓');
+    });
+}
+$('#pwBtn').onclick = () => pwDialog(false);
 
 /* ---------- aplikasi ---------- */
 async function showApp(){
+  $('#adminRoot')?.remove();
   $('#loginView').classList.add('hidden'); $('#appView').classList.remove('hidden');
   $('#who').textContent = state.user.name;
   $('#appView').classList.toggle('admin', state.user.role === 'admin');
     $('#today').textContent = new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long'});
   state.user.role === 'admin' ? adminInit() : render();
+  if (state.user.wajib) pwDialog(true);
 }
+// it.diff dihitung server (zona Asia/Jakarta), sama dengan hitungan "terlambat" di panel admin
 function dueInfo(it){
-  const diff = Math.round((new Date(it.due+'T00:00:00') - new Date(new Date().toDateString())) / 864e5);
+  const diff = it.diff;
   if (it.done) return ['ok','Sudah dikumpulkan'];
   if (diff < 0) return ['late','Terlambat '+(-diff)+' hari'];
   if (diff === 0) return ['soon','Hari ini!'];
@@ -63,7 +92,8 @@ function dueInfo(it){
   return ['ok', diff+' hari lagi'];
 }
 async function render(){
-  const all = await api.listPR();
+  let all;
+  try { all = await api.listPR(); } catch (e) { if (state.user) toast(e.message); return; }
   const done = all.filter(x => x.done).length, total = all.length;
   const pct = total ? Math.round(done/total*100) : 0;
   $('#sTotal').textContent = total; $('#sDone').textContent = done; $('#sTodo').textContent = total-done;
@@ -83,7 +113,8 @@ async function render(){
 }
 $('#list').addEventListener('click', async e => {
   const b = e.target.closest('.check'); if (!b) return;
-  await api.togglePR(+b.dataset.id); render();
+  try { await api.togglePR(+b.dataset.id); } catch (err) { toast(err.message); return; }
+  render();
 });
 $('#chips').addEventListener('click', e => {
   const c = e.target.closest('.chip'); if (!c) return;
@@ -91,8 +122,8 @@ $('#chips').addEventListener('click', e => {
   state.filter = c.dataset.f; render();
 });
 
-/* ---------- tambah PR ---------- */
-function toast(t){ const n=document.createElement('div'); n.className='toast'; n.textContent=t; document.body.append(n); setTimeout(()=>n.remove(),2200); }
+/* ---------- notifikasi ---------- */
+function toast(t){ const n=document.createElement('div'); n.className='toast'; n.textContent=t; n.setAttribute('role','status'); (document.querySelector('dialog[open]')||document.body).append(n); setTimeout(()=>n.remove(),2600); }
 
-/* ---------- pulihkan sesi (sementara, per tab) ---------- */
+/* ---------- pulihkan sesi (cookie, berlaku 7 hari) ---------- */
 api.me().then(u => { if (u){ state.user = u; showApp(); } });
