@@ -41,8 +41,18 @@ $('#loginForm').addEventListener('submit', async e => {
   state.user = res.user;
   showApp();
 });
-// ingat kode lembaga terakhir di perangkat ini
-try{ $('#kode').value = localStorage.getItem('kode') || '' }catch(e){}
+// Dropdown lembaga: daftar dari server + opsi tetap "Admin Platform"; ingat pilihan terakhir di perangkat ini
+(async function muatLembaga(){
+  const sel = $('#kode'); let daftar = [], gagal = false;
+  try { daftar = await api.daftarLembaga(); } catch (e) { gagal = true; }
+  let terakhir = ''; try{ terakhir = localStorage.getItem('kode') || '' }catch(e){}
+  sel.innerHTML = '<option value="" disabled>Pilih lembaga…</option>'
+    + daftar.map(l => `<option value="${esc(l.kode)}">${esc(l.nama)}</option>`).join('')
+    + '<option value="platform">🔑 Admin Platform</option>';
+  sel.value = [...sel.options].some(o => o.value === terakhir && terakhir) ? terakhir : '';
+  if (gagal) $('#loginErr').textContent = 'Daftar lembaga gagal dimuat. Muat ulang halaman.';
+  if (sel.value) $('#username').focus();
+})();
 // Kembali ke halaman login dan bersihkan sisa tampilan akun sebelumnya (panel admin, filter, daftar PR)
 function toLogin(){
   state.user = null; state.filter = 'all';

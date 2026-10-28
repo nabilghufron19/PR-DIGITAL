@@ -34,7 +34,11 @@ button{cursor:pointer;border:0}
 label{display:block;font-weight:700;font-size:.85rem;margin:14px 0 6px}
 .field{position:relative}
 .field input{width:100%;padding:14px 16px;border-radius:14px;border:2px solid var(--line);background:var(--bg);font-size:1rem;transition:.2s}
-.field input:focus{border-color:var(--brand);outline:0;background:var(--surface)}
+.field input:focus,.field select:focus{border-color:var(--brand);outline:0;background-color:var(--surface)}
+.field select{width:100%;padding:14px 44px 14px 16px;border-radius:14px;border:2px solid var(--line);background-color:var(--bg);font-size:1rem;transition:.2s;appearance:none;-webkit-appearance:none;cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);
+  background-position:calc(100% - 22px) 52%,calc(100% - 16px) 52%;background-size:6px 6px;background-repeat:no-repeat}
+.field select option{background:var(--surface);color:var(--text,inherit)}
 .eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;padding:8px;font-size:1.1rem;border-radius:10px}
 .btn{width:100%;padding:15px;border-radius:14px;font-weight:800;font-size:1rem;color:#fff;background:linear-gradient(135deg,var(--brand),#8C7BFF);box-shadow:0 8px 20px rgba(108,92,231,.35);transition:transform .15s}
 .btn:active{transform:scale(.98)}

@@ -15,6 +15,7 @@ const crud = n => ({
 });
 const api = {
   login: (kode, username, password) => call('/api/session', 'POST', { kode, username, password }).catch(e => ({ ok: false, message: e.message })),
+  daftarLembaga: () => call('/api/daftar-lembaga'),
   me: () => call('/api/session').then(u => (u.name ? u : null)).catch(() => null),
   sandi: (lama, baru) => call('/api/sandi', 'POST', { lama, baru }),
   logout: () => call('/api/session', 'DELETE').catch(() => {}),
