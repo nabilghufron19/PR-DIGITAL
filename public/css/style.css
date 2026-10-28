@@ -106,3 +106,38 @@ dialog input,dialog select{width:100%;padding:12px 14px;border-radius:12px;borde
 .meter{height:8px;border-radius:9px;background:var(--line);overflow:hidden;margin-bottom:4px;min-width:90px}
 .meter i{display:block;height:100%;background:var(--ok)}
 dialog textarea{width:100%;padding:12px 14px;border-radius:12px;border:2px solid var(--line);background:var(--bg);resize:vertical}
+
+/* ---------- MOBILE (layar < 720px): navigasi bawah + tabel jadi kartu ---------- */
+.tabs .chip .ti{font-size:1.15rem;line-height:1;margin-right:6px}
+.tabs .chip .tl{font-size:.8rem}
+@media(max-width:719px){
+  header.top{margin-bottom:12px}
+  .hello{min-width:0}
+  .hello h2{font-size:1.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .icon-btn{width:40px;height:40px;border-radius:12px}
+  /* navigasi tab admin menempel di bawah layar */
+  #appView.admin .tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;margin:0;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));
+    display:grid;grid-template-columns:repeat(4,1fr);gap:4px;overflow:visible;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -6px 20px rgba(0,0,0,.08)}
+  #appView.admin .tabs .chip .ti{margin:0}
+  #appView.admin .tabs .chip{display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 2px;border-radius:12px;min-width:0;white-space:nowrap}
+  .bar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .bar .sbtn{padding:11px 4px;text-align:center;font-size:.8rem;white-space:nowrap}
+  .bar .sbtn.p{grid-column:1/-1;font-size:.9rem}
+  .kpi{grid-template-columns:repeat(3,1fr);gap:8px}
+  .kpi div{padding:10px;border-radius:14px;font-size:.72rem}
+  .kpi b{font-size:1.25rem}
+  .scroll{border:0;background:none;overflow:visible;border-radius:0}
+  .tbl{min-width:0;display:block}
+  .tbl thead{display:none}
+  .tbl tbody{display:grid;gap:10px}
+  .tbl tr{display:block;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:4px 14px}
+  .tbl tbody{gap:8px}
+  .tbl td{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:4px 0;font-size:.85rem;border:0;text-align:right;overflow-wrap:anywhere}
+  .tbl td::before{content:attr(data-label);flex:none;color:var(--muted);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;text-align:left}
+  .tbl td[data-label=""]::before{display:none}
+  .tbl td[data-label=""]{justify-content:flex-end;padding:8px 0 6px;border-top:1px solid var(--line);margin-top:2px}
+  .tbl td.empty{display:block;text-align:center}.tbl td.empty::before{display:none}
+  .tbl td input[type=checkbox]{width:22px;height:22px}
+  .tbl .meter{width:110px;margin:0 0 4px auto}
+  .toast{bottom:96px}
+}

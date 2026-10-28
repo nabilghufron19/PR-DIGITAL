@@ -1,12 +1,14 @@
 /* Panel admin: Monitor, Soal, Murid, Penugasan + import/export Excel (SheetJS) */
-const TABS = { monitor: '📊 Monitor', soal: '📝 Soal', murid: '👩‍🎓 Murid', tugas: '📅 Penugasan' };
+const TABS = { monitor: ['📊', 'Monitor'], soal: ['📝', 'Soal'], murid: ['👩‍🎓', 'Murid'], tugas: ['📅', 'Tugas'] };
 const $a = s => document.querySelector(s);
 let CUR = 'monitor';
 const fmt = d => (d ? new Date(d).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-');
 const guard = fn => async (...a) => { try { await fn(...a); } catch (e) { toast(e.message); } };
 const norm = r => Object.fromEntries(Object.entries(r).map(([k, v]) => [k.trim().toLowerCase(), v]));
 const chunks = (a, n) => (a.length ? [a.slice(0, n), ...chunks(a.slice(n), n)] : []);
-const table = (cols, rows) => `<div class="scroll"><table class="tbl"><thead><tr>${cols.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.join('') || `<tr><td colspan="${cols.length}" class="empty">Belum ada data.</td></tr>`}</tbody></table></div>`;
+// data-label dipakai CSS di layar kecil: tiap baris tabel tampil sebagai kartu bertumpuk
+const labelRow = (cols, r) => { let i = 0; return r.replace(/<td/g, () => `<td data-label="${cols[i++] ?? ''}"`); };
+const table = (cols, rows) => `<div class="scroll"><table class="tbl"><thead><tr>${cols.map(c => `<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.map(r => labelRow(cols, r)).join('') || `<tr><td colspan="${cols.length}" class="empty">Belum ada data.</td></tr>`}</tbody></table></div>`;
 
 const xlsxOut = (rows, name) => { const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'Data'); XLSX.writeFile(wb, name + '.xlsx'); };
 const pickFile = cb => {
@@ -40,7 +42,7 @@ function openForm(title, fields, vals, onOk) {
 function adminInit() {
   let root = $a('#adminRoot');
   if (!root) { root = document.createElement('div'); root.id = 'adminRoot'; $a('#appView .wrap').append(root); }
-  root.innerHTML = `<nav class="tabs">${Object.entries(TABS).map(([k, v]) => `<button class="chip" data-t="${k}">${v}</button>`).join('')}</nav><div id="panel"></div>`;
+  root.innerHTML = `<nav class="tabs">${Object.entries(TABS).map(([k, [i, l]]) => `<button class="chip" data-t="${k}"><span class="ti">${i}</span><span class="tl">${l}</span></button>`).join('')}</nav><div id="panel"></div>`;
   root.querySelector('.tabs').onclick = e => { const b = e.target.closest('[data-t]'); if (b) adminTab(b.dataset.t); };
   adminTab('monitor');
 }
@@ -53,7 +55,7 @@ const adminTab = guard(async t => {
 // Panel daftar generik untuk Soal & Murid (tambah, ubah, hapus, import, export, template)
 async function listPanel(p, c) {
   const rows = await c.api.list(), done = () => adminTab(CUR);
-  p.innerHTML = `<div class="bar"><button class="sbtn p" id="n">＋ Tambah</button><button class="sbtn" id="i">⬆ Import Excel</button><button class="sbtn" id="e">⬇ Export Excel</button><button class="sbtn" id="t">📄 Template</button></div>`
+  p.innerHTML = `<div class="bar"><button class="sbtn p" id="n">＋ Tambah</button><button class="sbtn" id="i">⬆ Import</button><button class="sbtn" id="e">⬇ Export</button><button class="sbtn" id="t">📄 Template</button></div>`
     + table([...c.head, ''], rows.map(r => `<tr>${c.cells(r).map(x => `<td>${esc(String(x ?? ''))}</td>`).join('')}<td style="white-space:nowrap"><button class="sbtn" data-e="${r.id}">Ubah</button> <button class="sbtn" data-d="${r.id}">Hapus</button></td></tr>`));
   $a('#n').onclick = () => openForm('Tambah ' + c.name, c.F, c.def || {}, async v => { await c.api.add(v); done(); });
   $a('#i').onclick = () => pickFile(async d => { let n = 0, skip = 0; for (const part of chunks(d.map(norm), c.batch || 10)) { const r = await c.api.add(part); n += r.dibuat; skip += r.dilewati; } toast(n + ' data diimpor' + (skip ? `, ${skip} dilewati (kosong / duplikat akun admin)` : '')); done(); });
@@ -89,8 +91,8 @@ const PANELS = {
     const [rows, soal, murid] = await Promise.all([api.tugas.list(), api.soal.list(), api.murid.list()]);
     const kelas = [...new Set(murid.map(m => m.kelas).filter(Boolean))].sort();
     const st = r => r.status === 'dicabut' ? 'Dicabut' : new Date(r.mulai) > new Date() ? 'Terjadwal' : r.selesai_at ? 'Selesai' : 'Aktif';
-    p.innerHTML = `<div class="bar"><button class="sbtn p" id="n">📅 Tugaskan soal</button><button class="sbtn" id="c">⛔ Cabut terpilih</button><button class="sbtn" id="a">✅ Aktifkan terpilih</button><button class="sbtn" id="e">⬇ Export Excel</button></div>`
-      + table(['', 'Soal', 'Murid', 'Kelas', 'Mulai', 'Tenggat', 'Status'], rows.map(r => `<tr><td><input type="checkbox" value="${r.id}"></td><td>${esc(r.judul)}</td><td>${esc(r.nama)}</td><td>${esc(r.kelas)}</td><td>${fmt(r.mulai)}</td><td>${fmt(r.tenggat)}</td><td>${st(r)}</td></tr>`));
+    p.innerHTML = `<div class="bar"><button class="sbtn p" id="n">📅 Tugaskan soal</button><button class="sbtn" id="c">⛔ Cabut</button><button class="sbtn" id="a">✅ Aktifkan</button><button class="sbtn" id="e">⬇ Export</button></div>`
+      + table(['Pilih', 'Soal', 'Murid', 'Kelas', 'Mulai', 'Tenggat', 'Status'], rows.map(r => `<tr><td><input type="checkbox" value="${r.id}"></td><td>${esc(r.judul)}</td><td>${esc(r.nama)}</td><td>${esc(r.kelas)}</td><td>${fmt(r.mulai)}</td><td>${fmt(r.tenggat)}</td><td>${st(r)}</td></tr>`));
     const ids = () => [...p.querySelectorAll('tbody input:checked')].map(i => +i.value);
     if (rows.length >= 5000) toast('Hanya 5.000 penugasan terbaru yang ditampilkan & diekspor.');
     const set = s => guard(async () => { if (!ids().length) return toast('Pilih penugasan dulu'); await api.tugas.status(ids(), s); adminTab('tugas'); });
