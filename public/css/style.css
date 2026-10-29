@@ -87,7 +87,7 @@ header.top{display:flex;align-items:center;justify-content:space-between;gap:12p
 .empty div{font-size:3rem}
 .fab{position:fixed;right:20px;bottom:calc(22px + env(safe-area-inset-bottom,0px));padding:15px 22px;border-radius:999px;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--brand),#8C7BFF);box-shadow:0 12px 28px rgba(108,92,231,.45)}
 @media(min-width:720px){.fab{position:static;padding:12px 22px;box-shadow:0 8px 20px rgba(108,92,231,.35);flex:none}}
-dialog{border:0;border-radius:24px;padding:24px;width:min(92vw,420px);max-height:92dvh;overflow:auto;background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+dialog{margin:auto;border:0;border-radius:24px;padding:24px;width:min(92vw,420px);max-height:92dvh;overflow:auto;background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
 dialog::backdrop{background:rgba(18,16,31,.55);backdrop-filter:blur(4px)}
 dialog input,dialog select{width:100%;padding:12px 14px;border-radius:12px;border:2px solid var(--line);background:var(--bg)}
 .row{display:flex;gap:10px;margin-top:20px}
@@ -161,3 +161,36 @@ dialog .hint{display:block;color:var(--muted);font-size:.78rem;font-weight:500;m
   #appView.admin .tabs .chip .tl{font-size:.7rem}
   .tbl td small.mut{display:inline}
 }
+
+/* ---------- Kuis: murid membaca materi lalu menjawab soal ---------- */
+#appView.kuis .hero,#appView.kuis .toolbar,#appView.kuis #list{display:none}
+.card.kuis{cursor:pointer}
+.card.kuis.done h4{text-decoration:none;opacity:1}
+#kuisRoot{max-width:720px;margin:0 auto;display:grid;gap:14px}
+.kcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;box-shadow:var(--shadow);display:grid;gap:14px}
+.kcard h3{font-size:1.25rem;font-weight:800;overflow-wrap:anywhere}
+.materi{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.75;font-size:1rem;background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:16px}
+.khead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.kbar{height:8px;border-radius:9px;background:var(--line);overflow:hidden}
+.kbar i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--brand-2));transition:width .3s}
+.ktanya{font-size:1.1rem;font-weight:800;line-height:1.5;overflow-wrap:anywhere;white-space:pre-wrap}
+.kopsi{display:grid;gap:10px}
+.opt{display:flex;gap:12px;align-items:center;text-align:left;width:100%;padding:14px;border-radius:16px;background:var(--bg);border:2px solid var(--line);font-size:1rem;transition:.15s}
+.opt b{flex:none;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line)}
+.opt span{overflow-wrap:anywhere}
+.opt:not(:disabled):hover{border-color:var(--brand)}
+.opt:disabled{cursor:default}
+.opt.benar{border-color:var(--ok);background:rgba(0,184,148,.14)}
+.opt.benar b{background:var(--ok);color:#fff;border-color:var(--ok)}
+.opt.salah{border-color:var(--bad);background:rgba(255,118,117,.14)}
+.opt.salah b{background:var(--bad);color:#fff;border-color:var(--bad)}
+.kfb{border-radius:16px;padding:14px 16px;border:1px solid var(--line)}
+.kfb.ok{background:rgba(0,184,148,.12);border-color:var(--ok)}
+.kfb.no{background:rgba(255,118,117,.12);border-color:var(--bad)}
+.kfb p{margin-top:4px;font-size:.92rem;overflow-wrap:anywhere}
+.kskor{text-align:center}
+.kskor .angka{font-size:3.2rem;font-weight:800;color:var(--brand);line-height:1.1}
+.kreview{display:grid;gap:8px}
+.kreview div{padding:10px 12px;border-radius:12px;background:var(--bg);border:1px solid var(--line);font-size:.9rem;overflow-wrap:anywhere}
+.kreview small{display:block;color:var(--muted)}
+.kcard .stack{display:grid;gap:10px}

@@ -31,5 +31,21 @@ const api = {
     status: (ids, status) => call('/api/tugas', 'PATCH', { ids, status }),
     setor: (ids, selesai) => call('/api/setor', 'POST', { ids, selesai })
   },
+  paket: {
+    ...crud('paket'),
+    get: id => call('/api/paket?id=' + id),
+    template: () => call('/api/paket?template=1'),
+    salin: id => call('/api/paket?salin=' + id, 'POST')
+  },
+  paketSoal: {
+    add: (paket_id, soal) => call('/api/paket-soal', 'POST', { paket_id, soal }),
+    set: (id, b) => call('/api/paket-soal?id=' + id, 'PUT', b),
+    del: id => call('/api/paket-soal?id=' + id, 'DELETE')
+  },
+  kuis: {
+    get: id => call('/api/kuis?id=' + id),
+    jawab: (id, soal_id, pilih) => call('/api/kuis', 'POST', { id, soal_id, pilih }),
+    ulang: id => call('/api/kuis', 'PUT', { id })
+  },
   monitor: () => call('/api/monitor')
 };

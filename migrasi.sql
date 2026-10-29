@@ -23,6 +23,8 @@ alter table users add column if not exists tingkat text not null default '';
 update users set lembaga_id = (select id from lembaga where kode = 'sekolah') where lembaga_id is null;
 alter table users alter column lembaga_id set not null;
 drop index if exists users_nis_lower_idx;
+-- Versi lama membuat NIS unik di seluruh database (constraint users_nis_key). Harus dilepas agar NIS yang sama boleh dipakai di lembaga berbeda.
+alter table users drop constraint if exists users_nis_key;
 create unique index if not exists users_lembaga_nis_idx on users(lembaga_id, lower(nis));
 create index if not exists users_lembaga_role_idx on users(lembaga_id, role);
 alter table users drop constraint if exists users_role_check;

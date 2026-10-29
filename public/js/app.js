@@ -59,7 +59,8 @@ function toLogin(){
   $('#adminRoot')?.remove();
   $('#list').innerHTML = '';
   document.querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x.dataset.f === 'all'));
-  $('#appView').classList.add('hidden'); $('#appView').classList.remove('admin');
+  $('#appView').classList.add('hidden'); $('#appView').classList.remove('admin', 'kuis');
+  $('#kuisRoot').classList.add('hidden'); $('#kuisRoot').innerHTML = '';
   $('#loginView').classList.remove('hidden'); $('#password').value='';
   if ($('#kode').value) $('#username').focus();
   document.getElementById('fdlg')?.close();
@@ -119,6 +120,11 @@ async function render(){
   const rows = all.filter(x => f==='all' || (f==='done') === x.done);
   $('#list').innerHTML = rows.length ? rows.map(it => {
     const [ico,bg] = SUBJECTS[it.subject] || ['📝','#DFE6E9']; const [cls,txt] = dueInfo(it);
+    if (it.mode==='kuis') return `<article class="card kuis ${it.done?'done':''}" data-kuis="${it.id}">
+      <div class="badge" style="background:${bg}">${ico}</div>
+      <div class="info"><h4>${esc(it.title)}</h4><p>${esc(it.subject)} · Kuis ${it.nsoal} soal</p><span class="due ${cls}">${it.done?'Skor terbaik '+it.skor+'/'+it.nsoal:txt}</span></div>
+      <button class="check kuis" data-kuis="${it.id}" aria-label="${it.done?'Lihat hasil kuis':'Kerjakan kuis'}">${it.done?'✓':'🧠'}</button>
+    </article>`;
     return `<article class="card ${it.done?'done':''}">
       <div class="badge" style="background:${bg}">${ico}</div>
       <div class="info"><h4>${esc(it.title)}</h4><p>${esc(it.subject)}</p><p class="isi">${esc(it.isi||'')}</p><span class="due ${cls}">${it.mode==='setor'&&!it.done?'Setor buku · '+txt:txt}</span></div>
@@ -129,6 +135,7 @@ async function render(){
     : '<div class="empty"><div>🎈</div><p>Belum ada PR di sini.</p></div>';
 }
 $('#list').addEventListener('click', async e => {
+  const k = e.target.closest('[data-kuis]'); if (k) { bukaKuis(+k.dataset.kuis); return; } // kuis.js
   const b = e.target.closest('.check'); if (!b) return;
   try { await api.togglePR(+b.dataset.id); } catch (err) { toast(err.message); return; }
   render();
